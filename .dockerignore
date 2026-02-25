@@ -1,0 +1,5 @@
+photos/
+node_modules/
+.git/
+.env
+*.log
