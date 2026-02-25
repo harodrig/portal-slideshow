@@ -1,0 +1,22 @@
+services:
+  slideshow:
+    build:
+      context: .
+      target: production
+    image: portal-slideshow:latest
+    container_name: portal-slideshow
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./photos:/app/photos:ro # ro = read-only
+    environment:
+      - PORT=3000
+      - PHOTOS_DIR=/app/photos
+      - NODE_ENV=production
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:3000/api/photos"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
