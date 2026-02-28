@@ -109,7 +109,9 @@ function togglePlay() {
     noSleep.enable();
   } else {
     stopAutoplay();
-    noSleep.disable();
+    if (!document.fullscreenElement) {
+      noSleep.disable(); // only disable if not in fullscreen
+    }
   }
 }
 
@@ -186,14 +188,9 @@ document.addEventListener("fullscreenchange", () => {
   );
   btnFullscreen.classList.toggle("btn--active", isFullscreen);
 
-  // NoSleep logic (unchanged from before)
-  isFullscreen
-    ? noSleep.enable()
-    : isPlaying
-      ? noSleep.enable()
-      : noSleep.disable();
+  // NoSleep logic
+  isFullscreen ? noSleep.enable() : isPlaying ? noSleep.enable() : noSleep.disable();
 });
 
 // ── Init ─────────────────────────────────────────────
 fetchPhotos();
-startAutoplay();
