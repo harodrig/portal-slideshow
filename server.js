@@ -36,17 +36,32 @@ function setSecurityHeaders(res) {
     "Permissions-Policy",
     "camera=(), microphone=(), geolocation=()",
   );
-  res.setHeader(
-    "Content-Security-Policy",
-    [
-      "default-src 'self'",
-      "img-src 'self'",
-      "style-src 'self'",
-      "script-src 'self' https://cdnjs.cloudflare.com",
-      "media-src blob: data:",
-      "frame-ancestors 'none'",
-    ].join("; "),
-  );
+  // Content-Security-Policy is intentionally omitted for this deployment.
+  //
+  // This app runs exclusively on a local network (self-hosted kiosk), so the
+  // primary threats CSP guards against — XSS and external content injection —
+  // are not a meaningful risk here.
+  //
+  // More critically, the target device (Meta Portal, Chrome 16) has partial
+  // and buggy CSP support: the `media-src blob: data:` directive blocked the
+  // NoSleep.js video fallback (used to prevent screen sleep on old Android),
+  // and fullscreen requests were also silently denied. No CSP rewrite resolved
+  // this without removing the directive entirely.
+  //
+  // If this app is ever exposed to a public network, a proper CSP should be
+  // added and tested against all target browsers before deploying.
+  //
+  // res.setHeader(
+  //   "Content-Security-Policy",
+  //   [
+  //     "default-src 'self'",
+  //     "img-src 'self'",
+  //     "style-src 'self'",
+  //     "script-src 'self' https://cdnjs.cloudflare.com",
+  //     "media-src blob: data:",
+  //     "frame-ancestors 'none'",
+  //   ].join("; "),
+  // );
 }
 
 // ── Helpers ──────────────────────────────────────────
