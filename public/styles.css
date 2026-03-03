@@ -190,7 +190,7 @@ body {
     position: fixed;
     background: rgba(0, 0, 0, 0.55);
     color: #fff;
-    font-size: 1.8rem;
+    font-size: 1.8rem; /* overridden by inline style from size slider */
     font-variant-numeric: tabular-nums;
     padding: 0.4rem 0.9rem;
     border-radius: 6px;
@@ -198,11 +198,15 @@ body {
     z-index: 20;
     pointer-events: none;
     user-select: none;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.2em;
+    text-align: center;
 }
 
 /* Only show clock when slideshow is fullscreen and has-clock is set */
 .slideshow.is-fullscreen.has-clock .slideshow__clock {
-    display: block;
+    display: flex;
 }
 
 .slideshow__clock.clock--top-right {
@@ -231,6 +235,27 @@ body {
     left: 1.5rem;
     top: auto;
     right: auto;
+}
+
+/* ── Clock date line ────────────────────────────────── */
+.clock__date {
+    display: none;
+    font-size: 0.55em; /* scales with the clock's font-size */
+    opacity: 0.85;
+    white-space: nowrap;
+}
+
+.slideshow__clock.has-date .clock__date {
+    display: block;
+}
+
+/* Date below time: swap visual order */
+.slideshow__clock.date-below .clock__date {
+    order: 2;
+}
+
+.slideshow__clock.date-below .clock__time {
+    order: 1;
 }
 
 /* ── Side menu ──────────────────────────────────────── */
@@ -299,6 +324,39 @@ body {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 0.5rem;
+    margin-bottom: 1.25rem;
+}
+
+/* ── Slider ─────────────────────────────────────────── */
+.side-menu__slider {
+    width: 100%;
+    margin-bottom: 1.25rem;
+    cursor: pointer;
+    accent-color: #888;
+}
+
+/* ── Date sub-group (nested inside clock settings) ──── */
+.side-menu__subgroup {
+    display: none;
+    padding-top: 0.75rem;
+    border-top: 1px solid #2a2a2a;
+}
+
+.side-menu__subgroup.is-visible {
+    display: block;
+}
+
+/* ── Date format list ───────────────────────────────── */
+.side-menu__date-formats {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+}
+
+.side-menu__date-formats .btn {
+    font-size: 0.8rem;
+    padding: 0.3rem 0.6rem;
+    text-align: left;
 }
 
 /* ── Toggle button ──────────────────────────────────── */
