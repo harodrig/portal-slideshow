@@ -1,5 +1,6 @@
 // ── Configuration ────────────────────────────────────
 const AUTOPLAY_INTERVAL_MS = 60000;
+const CLOCK_POSITIONS = ['top-right', 'top-left', 'bottom-right', 'bottom-left'];
 const noSleep = new NoSleep();
 const slideshowEl = document.querySelector('.slideshow');
 const btnClose = document.querySelector('#btn-close');
@@ -38,6 +39,10 @@ async function fetchPhotos() {
 let currentIndex = 0;
 let isPlaying = true;
 let autoplayTimer = null;
+let isBlurEnabled = false;
+let isClockEnabled = false;
+let clockPosition = 'top-right';
+let clockInterval = null;
 
 // ── DOM references ───────────────────────────────────
 const imgEl = document.querySelector('.slideshow__image');
@@ -48,6 +53,15 @@ const btnPrev = document.querySelector('#btn-prev');
 const btnPlay = document.querySelector('#btn-play');
 const btnNext = document.querySelector('#btn-next');
 const btnFullscreen = document.querySelector('#btn-fullscreen');
+const btnMenu = document.querySelector('#btn-menu');
+const sideMenu = document.querySelector('#side-menu');
+const toggleBlurBtn = document.querySelector('#toggle-blur');
+const toggleClockBtn = document.querySelector('#toggle-clock');
+const blurBg = document.querySelector('#blur-bg');
+const clockEl = document.querySelector('#clock');
+const clockTimeEl = document.querySelector('#clock-time');
+const clockPositionGroup = document.querySelector('#clock-position-group');
+const positionBtns = document.querySelectorAll('.btn--position');
 
 // ── Core functions ───────────────────────────────────
 
@@ -63,6 +77,11 @@ function showPhoto(index) {
     imgEl.alt = photo.caption;
     captionEl.textContent = photo.caption;
     counterCurrent.textContent = index + 1;
+
+    // Update blur background when photo changes
+    if (isBlurEnabled) {
+      blurBg.style.backgroundImage = `url('${photo.src}')`;
+    }
 
     // Fade in once the image is loaded
     imgEl.onload = () => imgEl.classList.add('is-visible');
@@ -133,6 +152,92 @@ function toggleFullscreen() {
   }
 }
 
+// ── Menu functions ───────────────────────────────────
+
+function openMenu() {
+  sideMenu.classList.add('is-open');
+  sideMenu.setAttribute('aria-hidden', 'false');
+  btnMenu.setAttribute('aria-label', 'Close settings');
+  btnMenu.classList.add('btn--active');
+}
+
+function closeMenu() {
+  sideMenu.classList.remove('is-open');
+  sideMenu.setAttribute('aria-hidden', 'true');
+  btnMenu.setAttribute('aria-label', 'Open settings');
+  btnMenu.classList.remove('btn--active');
+}
+
+function toggleMenu() {
+  if (sideMenu.classList.contains('is-open')) {
+    closeMenu();
+  } else {
+    openMenu();
+  }
+}
+
+// ── Blur functions ───────────────────────────────────
+
+function applyBlur(enabled) {
+  isBlurEnabled = enabled;
+  toggleBlurBtn.textContent = enabled ? 'On' : 'Off';
+  toggleBlurBtn.setAttribute('aria-checked', String(enabled));
+  toggleBlurBtn.classList.toggle('is-on', enabled);
+  blurBg.classList.toggle('is-active', enabled);
+
+  if (enabled && imgEl.src) {
+    blurBg.style.backgroundImage = `url('${imgEl.src}')`;
+  }
+}
+
+// ── Clock functions ──────────────────────────────────
+
+function formatTime(date) {
+  const h = String(date.getHours()).padStart(2, '0');
+  const m = String(date.getMinutes()).padStart(2, '0');
+  const s = String(date.getSeconds()).padStart(2, '0');
+  return `${h}:${m}:${s}`;
+}
+
+function updateClock() {
+  clockTimeEl.textContent = formatTime(new Date());
+}
+
+function startClock() {
+  updateClock();
+  clockInterval = setInterval(updateClock, 1000);
+}
+
+function stopClock() {
+  clearInterval(clockInterval);
+  clockInterval = null;
+}
+
+function applyClockEnabled(enabled) {
+  isClockEnabled = enabled;
+  toggleClockBtn.textContent = enabled ? 'On' : 'Off';
+  toggleClockBtn.setAttribute('aria-checked', String(enabled));
+  toggleClockBtn.classList.toggle('is-on', enabled);
+  clockPositionGroup.classList.toggle('is-visible', enabled);
+  // Only show the clock overlay when currently in fullscreen
+  slideshowEl.classList.toggle('has-clock', enabled && !!document.fullscreenElement);
+
+  if (enabled) {
+    startClock();
+  } else {
+    stopClock();
+  }
+}
+
+function setClockPosition(position) {
+  clockPosition = position;
+  CLOCK_POSITIONS.forEach((pos) => clockEl.classList.remove(`clock--${pos}`));
+  clockEl.classList.add(`clock--${position}`);
+  positionBtns.forEach((btn) => {
+    btn.classList.toggle('btn--active', btn.dataset.position === position);
+  });
+}
+
 // ── Event listeners ──────────────────────────────────
 
 btnNext.addEventListener('click', () => {
@@ -175,11 +280,27 @@ btnClose.addEventListener('click', () => {
   }
 });
 
+btnMenu.addEventListener('click', toggleMenu);
+
+toggleBlurBtn.addEventListener('click', () => applyBlur(!isBlurEnabled));
+
+toggleClockBtn.addEventListener('click', () => applyClockEnabled(!isClockEnabled));
+
+positionBtns.forEach((btn) => {
+  btn.addEventListener('click', () => setClockPosition(btn.dataset.position));
+});
+
 document.addEventListener('fullscreenchange', () => {
   const isFullscreen = !!document.fullscreenElement;
 
   // Toggle the class that drives all CSS changes
   slideshowEl.classList.toggle('is-fullscreen', isFullscreen);
+
+  // Show or hide the clock overlay based on fullscreen state
+  slideshowEl.classList.toggle('has-clock', isClockEnabled && isFullscreen);
+
+  // Always close the side menu when entering fullscreen
+  if (isFullscreen) closeMenu();
 
   // Update the fullscreen button label
   btnFullscreen.setAttribute(
@@ -193,4 +314,5 @@ document.addEventListener('fullscreenchange', () => {
 });
 
 // ── Init ─────────────────────────────────────────────
+setClockPosition(clockPosition); // apply initial clock position class
 fetchPhotos();
