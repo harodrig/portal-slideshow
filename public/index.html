@@ -92,9 +92,16 @@
                     </button>
                 </div>
 
-                <div class="side-menu__suboption" id="clock-settings-group">
+                <div class="side-menu__suboption is-disabled" id="clock-settings-group">
                     <span class="side-menu__sublabel">Clock position</span>
                     <div class="side-menu__positions">
+                        <button
+                            class="btn btn--position"
+                            data-position="top-left"
+                            aria-label="Position: top left"
+                        >
+                            &#8598;
+                        </button>
                         <button
                             class="btn btn--position btn--active"
                             data-position="top-right"
@@ -104,10 +111,10 @@
                         </button>
                         <button
                             class="btn btn--position"
-                            data-position="top-left"
-                            aria-label="Position: top left"
+                            data-position="bottom-left"
+                            aria-label="Position: bottom left"
                         >
-                            &#8598;
+                            &#8601;
                         </button>
                         <button
                             class="btn btn--position"
@@ -115,13 +122,6 @@
                             aria-label="Position: bottom right"
                         >
                             &#8600;
-                        </button>
-                        <button
-                            class="btn btn--position"
-                            data-position="bottom-left"
-                            aria-label="Position: bottom left"
-                        >
-                            &#8601;
                         </button>
                     </div>
 
@@ -132,7 +132,7 @@
                         type="range"
                         id="clock-size-slider"
                         min="1"
-                        max="5"
+                        max="8"
                         value="3"
                         class="side-menu__slider"
                         aria-label="Clock size"
@@ -176,7 +176,7 @@
                         </button>
                     </div>
 
-                    <div class="side-menu__subgroup" id="clock-date-options-group">
+                    <div class="side-menu__subgroup is-disabled" id="clock-date-options-group">
                         <span class="side-menu__sublabel">Date position</span>
                         <div class="side-menu__positions">
                             <button
