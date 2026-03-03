@@ -10,6 +10,7 @@
     <body>
         <main class="slideshow">
             <figure class="slideshow__frame">
+                <div class="slideshow__blur-bg" id="blur-bg"></div>
                 <img class="slideshow__image" src="" alt="Slideshow photo" />
                 <figcaption class="slideshow__caption"></figcaption>
             </figure>
@@ -36,6 +37,13 @@
                     &#x26F6;
                 </button>
                 <button
+                    class="btn btn--menu"
+                    id="btn-menu"
+                    aria-label="Open settings"
+                >
+                    &#9776;
+                </button>
+                <button
                     class="btn btn--close"
                     id="btn-close"
                     aria-label="Exit fullscreen"
@@ -47,7 +55,181 @@
             <div class="slideshow__counter" aria-live="polite">
                 <span id="current">1</span> / <span id="total">1</span>
             </div>
+
+            <div class="slideshow__clock" id="clock" aria-live="off">
+                <span id="clock-date" class="clock__date"></span>
+                <span id="clock-time" class="clock__time"></span>
+            </div>
         </main>
+
+        <aside class="side-menu" id="side-menu" aria-hidden="true">
+            <div class="side-menu__panel">
+                <h2 class="side-menu__title">Settings</h2>
+
+                <div class="side-menu__option">
+                    <span class="side-menu__label">Blur background</span>
+                    <button
+                        class="btn btn--toggle"
+                        id="toggle-blur"
+                        role="switch"
+                        aria-checked="false"
+                        aria-label="Toggle blur background"
+                    >
+                        Off
+                    </button>
+                </div>
+
+                <div class="side-menu__option">
+                    <span class="side-menu__label">Clock in fullscreen</span>
+                    <button
+                        class="btn btn--toggle"
+                        id="toggle-clock"
+                        role="switch"
+                        aria-checked="false"
+                        aria-label="Toggle clock in fullscreen"
+                    >
+                        Off
+                    </button>
+                </div>
+
+                <div class="side-menu__suboption is-disabled" id="clock-settings-group">
+                    <span class="side-menu__sublabel">Clock position</span>
+                    <div class="side-menu__positions">
+                        <button
+                            class="btn btn--position"
+                            data-position="top-left"
+                            aria-label="Position: top left"
+                        >
+                            &#8598;
+                        </button>
+                        <button
+                            class="btn btn--position btn--active"
+                            data-position="top-right"
+                            aria-label="Position: top right"
+                        >
+                            &#8599;
+                        </button>
+                        <button
+                            class="btn btn--position"
+                            data-position="bottom-left"
+                            aria-label="Position: bottom left"
+                        >
+                            &#8601;
+                        </button>
+                        <button
+                            class="btn btn--position"
+                            data-position="bottom-right"
+                            aria-label="Position: bottom right"
+                        >
+                            &#8600;
+                        </button>
+                    </div>
+
+                    <label class="side-menu__sublabel" for="clock-size-slider"
+                        >Clock size</label
+                    >
+                    <input
+                        type="range"
+                        id="clock-size-slider"
+                        min="1"
+                        max="8"
+                        value="3"
+                        class="side-menu__slider"
+                        aria-label="Clock size"
+                    />
+
+                    <div class="side-menu__option">
+                        <span class="side-menu__label">Show seconds</span>
+                        <button
+                            class="btn btn--toggle"
+                            id="toggle-seconds"
+                            role="switch"
+                            aria-checked="false"
+                            aria-label="Toggle show seconds"
+                        >
+                            Off
+                        </button>
+                    </div>
+
+                    <div class="side-menu__option">
+                        <span class="side-menu__label">Hour format</span>
+                        <button
+                            class="btn btn--toggle"
+                            id="toggle-hour-format"
+                            aria-label="Toggle 12/24 hour format"
+                            aria-pressed="false"
+                        >
+                            24h
+                        </button>
+                    </div>
+
+                    <div class="side-menu__option">
+                        <span class="side-menu__label">Show date</span>
+                        <button
+                            class="btn btn--toggle"
+                            id="toggle-date"
+                            role="switch"
+                            aria-checked="false"
+                            aria-label="Toggle date display"
+                        >
+                            Off
+                        </button>
+                    </div>
+
+                    <div class="side-menu__subgroup is-disabled" id="clock-date-options-group">
+                        <span class="side-menu__sublabel">Date position</span>
+                        <div class="side-menu__positions">
+                            <button
+                                class="btn btn--position btn--active"
+                                id="btn-date-above"
+                                aria-label="Date above time"
+                            >
+                                Above
+                            </button>
+                            <button
+                                class="btn btn--position"
+                                id="btn-date-below"
+                                aria-label="Date below time"
+                            >
+                                Below
+                            </button>
+                        </div>
+
+                        <span class="side-menu__sublabel">Date format</span>
+                        <div class="side-menu__date-formats">
+                            <button
+                                class="btn btn--date-fmt btn--active"
+                                data-fmt="0"
+                                aria-label="Format: day name, number, month"
+                            >
+                                Tue 3 Mar
+                            </button>
+                            <button
+                                class="btn btn--date-fmt"
+                                data-fmt="1"
+                                aria-label="Format: DD/MM/YYYY"
+                            >
+                                DD/MM/YYYY
+                            </button>
+                            <button
+                                class="btn btn--date-fmt"
+                                data-fmt="2"
+                                aria-label="Format: YYYY-MM-DD"
+                            >
+                                YYYY-MM-DD
+                            </button>
+                            <button
+                                class="btn btn--date-fmt"
+                                data-fmt="3"
+                                aria-label="Format: Mon D, YYYY"
+                            >
+                                Mar 3, 2026
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </aside>
 
         <script src="slideshow.js"></script>
     </body>
