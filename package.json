@@ -7,7 +7,7 @@
     "start": "node index.js",
     "check": "node --check index.js && node --check src/server.js && node --check src/rateLimiter.js",
     "lint": "eslint .",
-    "test": "node --test tests/rateLimiter.test.js tests/server.test.js"
+    "test": "node --test tests/rateLimiter.test.js tests/server.test.js tests/slideshow.test.js"
   },
   "devDependencies": {
     "eslint": "^9.0.0"
