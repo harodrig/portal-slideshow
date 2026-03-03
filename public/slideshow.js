@@ -1,6 +1,43 @@
 // ── Configuration ────────────────────────────────────
 const AUTOPLAY_INTERVAL_MS = 60000;
 const CLOCK_POSITIONS = ['top-right', 'top-left', 'bottom-right', 'bottom-left'];
+
+const DAY_NAMES = [
+  'Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday',
+];
+const MONTH_NAMES_LONG = [
+  'January', 'February', 'March', 'April', 'May', 'June',
+  'July', 'August', 'September', 'October', 'November', 'December',
+];
+const MONTH_NAMES_SHORT = [
+  'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+  'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+];
+
+// Each entry is a function(Date) → string
+const DATE_FORMATS = [
+  // 0: "Tuesday 3 March" (default)
+  function(date) {
+    return `${DAY_NAMES[date.getDay()]} ${date.getDate()} ${MONTH_NAMES_LONG[date.getMonth()]}`;
+  },
+  // 1: "DD/MM/YYYY"
+  function(date) {
+    const d = String(date.getDate()).padStart(2, '0');
+    const m = String(date.getMonth() + 1).padStart(2, '0');
+    return `${d}/${m}/${date.getFullYear()}`;
+  },
+  // 2: "YYYY-MM-DD"
+  function(date) {
+    const d = String(date.getDate()).padStart(2, '0');
+    const m = String(date.getMonth() + 1).padStart(2, '0');
+    return `${date.getFullYear()}-${m}-${d}`;
+  },
+  // 3: "Mar 3, 2026"
+  function(date) {
+    return `${MONTH_NAMES_SHORT[date.getMonth()]} ${date.getDate()}, ${date.getFullYear()}`;
+  },
+];
+
 const noSleep = new NoSleep();
 const slideshowEl = document.querySelector('.slideshow');
 const btnClose = document.querySelector('#btn-close');
@@ -43,6 +80,11 @@ let isBlurEnabled = false;
 let isClockEnabled = false;
 let clockPosition = 'top-right';
 let clockInterval = null;
+let clockSize = 3;
+let clockShowSeconds = false;
+let clockUse12h = false;
+let clockShowDate = false;
+let clockDateFormat = 0;
 
 // ── DOM references ───────────────────────────────────
 const imgEl = document.querySelector('.slideshow__image');
@@ -60,8 +102,17 @@ const toggleClockBtn = document.querySelector('#toggle-clock');
 const blurBg = document.querySelector('#blur-bg');
 const clockEl = document.querySelector('#clock');
 const clockTimeEl = document.querySelector('#clock-time');
-const clockPositionGroup = document.querySelector('#clock-position-group');
+const clockDateEl = document.querySelector('#clock-date');
+const clockSettingsGroup = document.querySelector('#clock-settings-group');
 const positionBtns = document.querySelectorAll('.btn--position');
+const clockSizeSlider = document.querySelector('#clock-size-slider');
+const toggleSecondsBtn = document.querySelector('#toggle-seconds');
+const toggleHourFormatBtn = document.querySelector('#toggle-hour-format');
+const toggleDateBtn = document.querySelector('#toggle-date');
+const clockDateOptionsGroup = document.querySelector('#clock-date-options-group');
+const btnDateAbove = document.querySelector('#btn-date-above');
+const btnDateBelow = document.querySelector('#btn-date-below');
+const dateFmtBtns = document.querySelectorAll('.btn--date-fmt');
 
 // ── Core functions ───────────────────────────────────
 
@@ -192,15 +243,33 @@ function applyBlur(enabled) {
 
 // ── Clock functions ──────────────────────────────────
 
-function formatTime(date) {
-  const h = String(date.getHours()).padStart(2, '0');
+// Returns HH:MM or HH:MM:SS in 24h or 12h format
+function formatTime(date, showSeconds, use12h) {
+  let h = date.getHours();
   const m = String(date.getMinutes()).padStart(2, '0');
   const s = String(date.getSeconds()).padStart(2, '0');
-  return `${h}:${m}:${s}`;
+
+  let suffix = '';
+  if (use12h) {
+    suffix = h >= 12 ? ' PM' : ' AM';
+    h = h % 12 || 12; // 0 → 12 for midnight
+  }
+
+  const hStr = String(h).padStart(2, '0');
+  const time = showSeconds ? `${hStr}:${m}:${s}` : `${hStr}:${m}`;
+  return time + suffix;
+}
+
+function formatDate(date) {
+  return DATE_FORMATS[clockDateFormat](date);
 }
 
 function updateClock() {
-  clockTimeEl.textContent = formatTime(new Date());
+  const now = new Date();
+  clockTimeEl.textContent = formatTime(now, clockShowSeconds, clockUse12h);
+  if (clockShowDate) {
+    clockDateEl.textContent = formatDate(now);
+  }
 }
 
 function startClock() {
@@ -218,7 +287,7 @@ function applyClockEnabled(enabled) {
   toggleClockBtn.textContent = enabled ? 'On' : 'Off';
   toggleClockBtn.setAttribute('aria-checked', String(enabled));
   toggleClockBtn.classList.toggle('is-on', enabled);
-  clockPositionGroup.classList.toggle('is-visible', enabled);
+  clockSettingsGroup.classList.toggle('is-visible', enabled);
   // Only show the clock overlay when currently in fullscreen
   slideshowEl.classList.toggle('has-clock', enabled && !!document.fullscreenElement);
 
@@ -234,8 +303,55 @@ function setClockPosition(position) {
   CLOCK_POSITIONS.forEach((pos) => clockEl.classList.remove(`clock--${pos}`));
   clockEl.classList.add(`clock--${position}`);
   positionBtns.forEach((btn) => {
-    btn.classList.toggle('btn--active', btn.dataset.position === position);
+    if (!btn.id) { // only the corner-position buttons, not the date-position buttons
+      btn.classList.toggle('btn--active', btn.dataset.position === position);
+    }
   });
+}
+
+function applyClockSize(size) {
+  clockSize = size;
+  clockEl.style.fontSize = `${size * 0.4 + 0.6}rem`;
+}
+
+function applyShowSeconds(enabled) {
+  clockShowSeconds = enabled;
+  toggleSecondsBtn.textContent = enabled ? 'On' : 'Off';
+  toggleSecondsBtn.setAttribute('aria-checked', String(enabled));
+  toggleSecondsBtn.classList.toggle('is-on', enabled);
+  updateClock();
+}
+
+function applyHourFormat(use12h) {
+  clockUse12h = use12h;
+  toggleHourFormatBtn.textContent = use12h ? '12h' : '24h';
+  toggleHourFormatBtn.setAttribute('aria-pressed', String(use12h));
+  toggleHourFormatBtn.classList.toggle('is-on', use12h);
+  updateClock();
+}
+
+function applyShowDate(enabled) {
+  clockShowDate = enabled;
+  toggleDateBtn.textContent = enabled ? 'On' : 'Off';
+  toggleDateBtn.setAttribute('aria-checked', String(enabled));
+  toggleDateBtn.classList.toggle('is-on', enabled);
+  clockDateOptionsGroup.classList.toggle('is-visible', enabled);
+  clockEl.classList.toggle('has-date', enabled);
+  if (enabled) updateClock();
+}
+
+function applyDatePosition(below) {
+  clockEl.classList.toggle('date-below', below);
+  btnDateAbove.classList.toggle('btn--active', !below);
+  btnDateBelow.classList.toggle('btn--active', below);
+}
+
+function applyDateFormat(formatIndex) {
+  clockDateFormat = formatIndex;
+  dateFmtBtns.forEach((btn) => {
+    btn.classList.toggle('btn--active', parseInt(btn.dataset.fmt, 10) === formatIndex);
+  });
+  if (clockShowDate) updateClock();
 }
 
 // ── Event listeners ──────────────────────────────────
@@ -286,8 +402,28 @@ toggleBlurBtn.addEventListener('click', () => applyBlur(!isBlurEnabled));
 
 toggleClockBtn.addEventListener('click', () => applyClockEnabled(!isClockEnabled));
 
+// Corner position buttons (exclude date-position buttons that have an id)
 positionBtns.forEach((btn) => {
-  btn.addEventListener('click', () => setClockPosition(btn.dataset.position));
+  if (!btn.id) {
+    btn.addEventListener('click', () => setClockPosition(btn.dataset.position));
+  }
+});
+
+clockSizeSlider.addEventListener('input', () => {
+  applyClockSize(parseInt(clockSizeSlider.value, 10));
+});
+
+toggleSecondsBtn.addEventListener('click', () => applyShowSeconds(!clockShowSeconds));
+
+toggleHourFormatBtn.addEventListener('click', () => applyHourFormat(!clockUse12h));
+
+toggleDateBtn.addEventListener('click', () => applyShowDate(!clockShowDate));
+
+btnDateAbove.addEventListener('click', () => applyDatePosition(false));
+btnDateBelow.addEventListener('click', () => applyDatePosition(true));
+
+dateFmtBtns.forEach((btn) => {
+  btn.addEventListener('click', () => applyDateFormat(parseInt(btn.dataset.fmt, 10)));
 });
 
 document.addEventListener('fullscreenchange', () => {
@@ -315,4 +451,5 @@ document.addEventListener('fullscreenchange', () => {
 
 // ── Init ─────────────────────────────────────────────
 setClockPosition(clockPosition); // apply initial clock position class
+applyClockSize(clockSize);       // apply initial font size from slider default
 fetchPhotos();
