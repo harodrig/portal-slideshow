@@ -29,6 +29,11 @@ COPY --from=builder /app/index.js ./
 COPY --from=builder /app/src/ ./src/
 COPY --from=builder /app/public/ ./public/
 
+# Remove npm and other build tools not needed at runtime
+RUN npm uninstall -g npm corepack && \
+    rm -rf /opt/yarn-v1.22.22 && \
+    chown -R slideshow:slideshow /app
+
 # Create the photos mount point and give ownership to our user
 RUN mkdir -p /app/photos && chown -R portal:portal /app
 
