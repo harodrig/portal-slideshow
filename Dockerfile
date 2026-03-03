@@ -4,13 +4,18 @@ FROM node:20-alpine AS builder
 WORKDIR /app
 
 COPY package*.json ./
-COPY server.js ./
+COPY index.js ./
 COPY src/ ./src/
 COPY public/ ./public/
+COPY tests/ ./tests/
 
 # Syntax check
-RUN node --check server.js && \
+RUN node --check index.js && \
+    node --check src/server.js && \
     node --check src/rateLimiter.js
+
+# Run tests — build fails if any test fails
+RUN node --test tests/*.test.js
 
 # STAGE 2: production image
 FROM node:20-alpine AS production
@@ -20,8 +25,7 @@ RUN addgroup -S portal && adduser -S portal -G portal
 
 WORKDIR /app
 
-# Copy only the validated application files from builder
-COPY --from=builder /app/server.js ./
+COPY --from=builder /app/index.js ./
 COPY --from=builder /app/src/ ./src/
 COPY --from=builder /app/public/ ./public/
 
@@ -43,4 +47,4 @@ ENV NODE_ENV=production
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
     CMD wget -qO- http://localhost:3000/api/photos || exit 1
 
-CMD ["node", "server.js"]
+CMD ["node", "index.js"]
