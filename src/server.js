@@ -3,12 +3,9 @@
 const http = require("http");
 const fs = require("fs");
 const path = require("path");
-
-const { createRateLimiter } = require("./src/rateLimiter");
-const isAllowed = createRateLimiter({ windowMs: 60_000, maxRequests: 100 });
+const { createRateLimiter } = require("./rateLimiter");
 
 // ── Configuration ────────────────────────────────────
-const PORT = process.env.PORT || 3000;
 const PHOTOS_DIR = path.resolve(process.env.PHOTOS_DIR || "./photos");
 const PUBLIC_DIR = path.resolve("./public");
 const ALLOWED_EXT = new Set([".jpg", ".jpeg", ".png", ".webp", ".gif"]);
@@ -158,43 +155,47 @@ function handleStatic(res, urlPath) {
   sendFile(res, filePath);
 }
 
-// ── Request router ───────────────────────────────────
+// ── Export createServer instead of calling listen ────
+function createServer() {
+  const { isAllowed, stop } = createRateLimiter({
+    windowMs: 60_000,
+    maxRequests: 100,
+  });
 
-const server = http.createServer((req, res) => {
-  setSecurityHeaders(res);
+  const server = http.createServer((req, res) => {
+    setSecurityHeaders(res);
 
-  const ip = req.socket.remoteAddress;
-  if (!isAllowed(ip)) {
-    res.setHeader("Retry-After", "60");
-    sendError(res, 429, "Too many requests, please slow down.");
-    return;
-  }
+    const ip = req.socket.remoteAddress;
+    if (!isAllowed(ip)) {
+      res.setHeader("Retry-After", "60");
+      sendError(res, 429, "Too many requests, please slow down.");
+      return;
+    }
 
-  const method = req.method;
-  const urlPath = req.url.split("?")[0]; // strip query strings
+    const method = req.method;
+    const urlPath = req.url.split("?")[0];
 
-  console.log(`${method} ${urlPath}`);
+    console.log(`${method} ${urlPath}`);
 
-  // Only allow GET requests
-  if (method !== "GET") {
-    sendError(res, 405, "Method not allowed");
-    return;
-  }
+    if (method !== "GET") {
+      sendError(res, 405, "Method not allowed");
+      return;
+    }
 
-  if (urlPath === "/api/photos") {
-    handleGetPhotos(res);
-  } else if (urlPath.startsWith("/photos/")) {
-    const filename = urlPath.slice("/photos/".length);
-    handleGetPhoto(res, filename);
-  } else {
-    handleStatic(res, urlPath);
-  }
-});
+    if (urlPath === "/api/photos") {
+      handleGetPhotos(res);
+    } else if (urlPath.startsWith("/photos/")) {
+      const filename = urlPath.slice("/photos/".length);
+      handleGetPhoto(res, filename);
+    } else {
+      handleStatic(res, urlPath);
+    }
+  });
 
-// ── Start ────────────────────────────────────────────
+  // Expose stop so tests can clean up
+  server.on("close", stop);
 
-server.listen(PORT, () => {
-  console.log(`Server running at http://localhost:${PORT}`);
-  console.log(`Serving photos from: ${PHOTOS_DIR}`);
-  console.log(`Serving frontend from: ${PUBLIC_DIR}`);
-});
+  return server;
+}
+
+module.exports = { createServer, SAFE_FILENAME, ALLOWED_EXT };
