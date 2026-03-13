@@ -14,6 +14,8 @@ services:
       - PHOTOS_DIR=/app/photos
       - NODE_ENV=production
     restart: unless-stopped
+    mem_limit: 256m
+    mem_reservation: 64m
     healthcheck:
       test: ["CMD", "wget", "-qO-", "http://localhost:3000/api/photos"]
       interval: 30s

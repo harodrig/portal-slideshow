@@ -117,6 +117,18 @@ describe('method validation', () => {
   });
 });
 
+// ── Connection limit test (pure logic, no listen needed) ──────
+describe('connection limits', () => {
+  test('server.maxConnections is set to a finite value', () => {
+    const server = createServer();
+    assert.ok(
+      typeof server.maxConnections === 'number' && server.maxConnections > 0,
+      'maxConnections must be a positive number',
+    );
+    server.close();
+  });
+});
+
 // ── Filename validation tests (pure logic, no server needed) ──
 describe('SAFE_FILENAME regex', () => {
   test('allows normal filenames', () => {

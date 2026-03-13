@@ -1,6 +1,6 @@
 'use strict';
 
-function createRateLimiter({ windowMs = 60_000, maxRequests = 100 } = {}) {
+function createRateLimiter({ windowMs = 60_000, maxRequests = 100, maxClients = 10_000 } = {}) {
   const clients = new Map();
 
   const cleanupInterval = setInterval(() => {
@@ -19,6 +19,7 @@ function createRateLimiter({ windowMs = 60_000, maxRequests = 100 } = {}) {
     const entry = clients.get(ip);
 
     if (!entry || now > entry.resetAt) {
+      if (clients.size >= maxClients) return false; // drop new IPs when table is full
       clients.set(ip, { count: 1, resetAt: now + windowMs });
       return true;
     }

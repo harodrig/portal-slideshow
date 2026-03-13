@@ -65,4 +65,18 @@ describe('createRateLimiter', () => {
     assert.equal(isAllowed('192.168.1.4'), true);
     stop();
   });
+
+  test('blocks new IPs once maxClients is reached', () => {
+    const { isAllowed, stop } = createRateLimiter({
+      windowMs: 60_000,
+      maxRequests: 10,
+      maxClients: 2,
+    });
+
+    assert.equal(isAllowed('10.0.0.1'), true);
+    assert.equal(isAllowed('10.0.0.2'), true);
+    // Table is full — a new IP must be rejected even though it is under the rate limit
+    assert.equal(isAllowed('10.0.0.3'), false);
+    stop();
+  });
 });

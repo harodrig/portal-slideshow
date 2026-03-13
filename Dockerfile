@@ -1,6 +1,8 @@
 # STAGE 1: build
 FROM node:20-alpine AS builder
 
+RUN apk upgrade --no-cache
+
 WORKDIR /app
 
 COPY package*.json ./
@@ -19,6 +21,8 @@ RUN node --test tests/*.test.js
 
 # STAGE 2: production image
 FROM node:20-alpine AS production
+
+RUN apk upgrade --no-cache
 
 WORKDIR /app
 
@@ -51,4 +55,4 @@ ENV NODE_ENV=production
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
     CMD wget -qO- http://localhost:3000/api/photos || exit 1
 
-CMD ["node", "index.js"]
+CMD ["node", "--max-old-space-size=192", "index.js"]

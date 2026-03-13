@@ -10,6 +10,7 @@ const PHOTOS_DIR = path.resolve(process.env.PHOTOS_DIR || './photos');
 const PUBLIC_DIR = path.resolve('./public');
 const ALLOWED_EXT = new Set(['.jpg', '.jpeg', '.png', '.webp', '.gif']);
 const SAFE_FILENAME = /^[\w\-. ]+$/;
+const MAX_CONNECTIONS = 100; // cap concurrent TCP connections to bound socket memory
 
 // ── MIME types for static files ──────────────────────
 const MIME_TYPES = {
@@ -91,7 +92,9 @@ function sendFile(res, filePath) {
       'Content-Length': stats.size,
     });
 
-    fs.createReadStream(filePath).pipe(res);
+    const stream = fs.createReadStream(filePath);
+    stream.on('error', () => res.destroy());
+    stream.pipe(res);
   });
 }
 
@@ -191,6 +194,8 @@ function createServer() {
       handleStatic(res, urlPath);
     }
   });
+
+  server.maxConnections = MAX_CONNECTIONS;
 
   // Expose stop so tests can clean up
   server.on('close', stop);
