@@ -1,6 +1,8 @@
 # STAGE 1: build
 FROM node:20-alpine AS builder
 
+RUN apk upgrade --no-cache
+
 WORKDIR /app
 
 COPY package*.json ./
@@ -19,6 +21,8 @@ RUN node --test tests/*.test.js
 
 # STAGE 2: production image
 FROM node:20-alpine AS production
+
+RUN apk upgrade --no-cache
 
 WORKDIR /app
 
